@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新城數學互動模擬器 - DSE 排序與加乘原理</title>
+    <title>中五數學互動模擬器 - DSE 排序與加乘原理</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for Icons -->
@@ -12,9 +12,9 @@
     <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@300;400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
         body {
-            font-family: 'Noto Sans TC', sans-serif;
+            font-family: 'Noto Sans HK', 'Noto Sans TC', sans-serif;
             background-color: #f8fafc;
         }
         .tree-node {
@@ -43,6 +43,31 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+
+        /* nCr Section Specific Styles */
+        .ball {
+            transition: all 0.3s ease;
+        }
+        .ncr-tab-active {
+            border-bottom: 4px solid #0ea5e9;
+            color: #0ea5e9;
+            font-weight: bold;
+        }
+        .step-hidden {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .step-visible {
+            display: block;
+            animation: slideIn 0.5s forwards;
+        }
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col">
@@ -56,7 +81,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold leading-tight">新城數學互動模擬器</h1>
-                    <p class="text-xs text-indigo-200">香港 DSE 中五數學：加法原理、乘法原理與排列 (!)</p>
+                    <p class="text-xs text-indigo-200">香港 DSE 中五數學：加法、乘法、排列與組合</p>
                 </div>
             </div>
             <!-- Navigation Tabs -->
@@ -70,8 +95,11 @@
                 <button onclick="switchTab('factorial')" id="tab-factorial" class="px-3 py-1.5 rounded-lg transition-all duration-200 text-indigo-100 hover:text-white hover:bg-indigo-700/50">
                     <i class="fa-solid fa-arrow-down-a-z mr-1 text-cyan-400"></i>3. 排序與階乘 (!)
                 </button>
+                <button onclick="switchTab('ncr')" id="tab-ncr" class="px-3 py-1.5 rounded-lg transition-all duration-200 text-indigo-100 hover:text-white hover:bg-indigo-700/50">
+                    <i class="fa-solid fa-users mr-1 text-purple-400"></i>4. nCr 組合 (C)
+                </button>
                 <button onclick="switchTab('dse-mc')" id="tab-dse-mc" class="px-3 py-1.5 rounded-lg transition-all duration-200 text-indigo-100 hover:text-white hover:bg-indigo-700/50">
-                    <i class="fa-solid fa-file-pen mr-1 text-rose-400"></i>4. DSE MC 模擬題
+                    <i class="fa-solid fa-file-pen mr-1 text-rose-400"></i>5. DSE MC 模擬題
                 </button>
             </nav>
         </div>
@@ -329,7 +357,328 @@
         </section>
 
 
-        <!-- ==================== TAB 4: DSE MC PRACTICE QUESTIONS ==================== -->
+        <!-- ==================== TAB 4: nCr COMBINATIONS ==================== -->
+        <section id="sec-ncr" class="tab-content hidden space-y-8 bg-[#f0fdfa] p-4 rounded-2xl">
+            <!-- Header -->
+            <div class="text-center space-y-4 pt-4">
+                <h2 class="text-2xl md:text-3xl font-bold text-teal-800">🎯 DSE 數學：nCr 組合與排列 (先選後排)</h2>
+                <p class="text-sm md:text-base text-gray-600">放棄死記 nPr，掌握「先選 (nCr) 後排 (r!)」，破解 DSE 複雜題型！</p>
+            </div>
+
+            <!-- Section 1: Simulator -->
+            <div class="bg-white p-6 rounded-2xl shadow-lg border border-teal-100">
+                <h3 class="text-xl font-bold text-teal-700 mb-4 flex items-center">
+                    <span class="mr-2">🧮</span> 互動 nCr 模擬器
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Controls -->
+                    <div class="space-y-6 bg-teal-50 p-4 rounded-xl">
+                        <div>
+                            <label class="block text-gray-700 font-bold mb-2">總數 n = <span id="n-value" class="text-teal-600 text-xl">5</span></label>
+                            <input type="range" id="n-slider" min="1" max="12" value="5" class="w-full accent-teal-600">
+                            <p class="text-xs text-gray-500 mt-1">從多少個物件中選擇 (上限設為 12 以便顯示)</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-bold mb-2">選出 r = <span id="r-value" class="text-teal-600 text-xl">2</span></label>
+                            <input type="range" id="r-slider" min="0" max="5" value="2" class="w-full accent-teal-600">
+                            <p class="text-xs text-gray-500 mt-1">你要選出多少個物件</p>
+                        </div>
+                        <div class="pt-4 border-t border-teal-200">
+                            <p class="text-lg font-bold text-gray-800">計算結果：</p>
+                            <p class="text-2xl text-center mt-2 font-mono bg-white p-3 rounded-lg shadow-inner">
+                                <sup><span id="disp-n">5</span></sup>C<sub><span id="disp-r">2</span></sub> = <span id="result-ncr" class="text-rose-600 font-bold">10</span>
+                            </p>
+                            <p class="text-xs text-center text-gray-500 mt-2">公式: n! / [r! × (n-r)!]</p>
+                        </div>
+                    </div>
+
+                    <!-- Visualization -->
+                    <div class="flex flex-col items-center justify-center bg-gray-50 p-4 rounded-xl border border-gray-200">
+                        <p class="font-bold text-gray-600 mb-4 text-sm">視覺化：<span id="visual-desc">從 5 個球中選出 2 個</span></p>
+                        <div id="balls-container" class="flex flex-wrap justify-center gap-3">
+                            <!-- Balls injected by JS -->
+                        </div>
+                        <p class="mt-6 text-xs text-gray-500 bg-blue-50 p-3 rounded-lg leading-relaxed">
+                            💡 提示：<span class="text-blue-600 font-bold">nCr</span> 只在乎「選了誰」，<span class="text-red-500 font-bold">不在乎次序</span>。如果選出來的物件要排隊，我們會在選完後再乘以 <span class="text-purple-600 font-bold">r!</span>。
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Core Concept -->
+            <div class="bg-gradient-to-r from-blue-500 to-teal-500 p-6 rounded-2xl shadow-lg text-white">
+                <h3 class="text-xl font-bold mb-3">⚠️ 為什麼 DSE 達人都不用 nPr？</h3>
+                <div class="bg-white/20 p-4 rounded-lg backdrop-blur-sm text-sm sm:text-base leading-relaxed mb-6">
+                    <p>在應付 DSE 題目時，題目往往有諸多限制（例如：「必須有兩個女仔」、「男仔不能相鄰」）。</p>
+                    <p class="mt-2 font-bold text-yellow-200">✨ 萬用必殺技：「先選 (nCr) ，後排列 (r!)」</p>
+                    <p class="mt-2 text-xs sm:text-sm opacity-90">
+                        將問題拆開兩步：<br>
+                        1. <b>先選出</b>合適的人選 (用 nCr 慢慢砌出符合條件的組合)<br>
+                        2. <b>再將他們排列</b> (對已選出的人用 r! 或其他排列技巧)<br>
+                        這樣思路會極度清晰，絕不會漏算或重複計算！
+                    </p>
+                </div>
+
+                <!-- 抽波波視覺化解釋 -->
+                <div class="bg-white text-gray-800 p-4 md:p-6 rounded-xl shadow-inner mt-6">
+                    <h4 class="text-lg md:text-xl font-bold text-teal-700 mb-6 text-center">🎲 視覺化：從 🔴 🔵 🟢 3個波中抽出 2個</h4>
+                    
+                    <div class="flex flex-col lg:flex-row gap-6 items-stretch justify-center">
+                        
+                        <!-- nPr 區塊 -->
+                        <div class="flex-1 bg-red-50 p-4 rounded-xl border-2 border-red-200 w-full flex flex-col">
+                            <h5 class="font-bold text-red-700 text-base text-center mb-4 border-b-2 border-red-200 pb-2">❌ 如果計次序 (nPr)<br><span class="text-xs">3P2 = 6 個結果</span></h5>
+                            <div class="grid grid-cols-2 gap-3 text-center flex-grow">
+                                <!-- 組合 1 分支 -->
+                                <div class="bg-white p-2 rounded-lg shadow border border-purple-300 flex flex-col justify-center">
+                                    <span class="text-xl md:text-2xl">🔴🔵</span><span class="text-[10px] text-gray-500 mt-1">先紅後藍</span>
+                                </div>
+                                <div class="bg-white p-2 rounded-lg shadow border border-purple-300 flex flex-col justify-center">
+                                    <span class="text-xl md:text-2xl">🔵🔴</span><span class="text-[10px] text-gray-500 mt-1">先藍後紅</span>
+                                </div>
+                                
+                                <!-- 組合 2 分支 -->
+                                <div class="bg-white p-2 rounded-lg shadow border border-orange-300 flex flex-col justify-center">
+                                    <span class="text-xl md:text-2xl">🔴🟢</span><span class="text-[10px] text-gray-500 mt-1">先紅後綠</span>
+                                </div>
+                                <div class="bg-white p-2 rounded-lg shadow border border-orange-300 flex flex-col justify-center">
+                                    <span class="text-xl md:text-2xl">🟢🔴</span><span class="text-[10px] text-gray-500 mt-1">先綠後紅</span>
+                                </div>
+                                
+                                <!-- 組合 3 分支 -->
+                                <div class="bg-white p-2 rounded-lg shadow border border-cyan-300 flex flex-col justify-center">
+                                    <span class="text-xl md:text-2xl">🔵🟢</span><span class="text-[10px] text-gray-500 mt-1">先藍後綠</span>
+                                </div>
+                                <div class="bg-white p-2 rounded-lg shadow border border-cyan-300 flex flex-col justify-center">
+                                    <span class="text-xl md:text-2xl">🟢🔵</span><span class="text-[10px] text-gray-500 mt-1">先綠後藍</span>
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-red-600 mt-3 text-center font-bold bg-red-100 p-2 rounded">相同顏色的波因為「次序不同」，被當成了 2 個獨立結果！</p>
+                        </div>
+
+                        <!-- 箭頭 -->
+                        <div class="hidden lg:flex flex-col items-center justify-center">
+                            <span class="text-3xl text-gray-400">➡️</span>
+                            <span class="text-xs font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded-full mt-2 whitespace-nowrap border border-gray-200">合併組合</span>
+                        </div>
+                        <div class="flex lg:hidden flex-col items-center my-1">
+                            <span class="text-3xl text-gray-400">⬇️</span>
+                            <span class="text-xs font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded-full mt-2 border border-gray-200">合併組合</span>
+                        </div>
+
+                        <!-- nCr 區塊 -->
+                        <div class="flex-1 bg-teal-50 p-4 rounded-xl border-2 border-teal-400 w-full flex flex-col relative overflow-hidden">
+                            <div class="absolute top-0 right-0 bg-teal-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">推薦做法</div>
+                            <h5 class="font-bold text-teal-800 text-base text-center mb-4 border-b-2 border-teal-200 pb-2">✅ 不計次序，只睇組合 (nCr)<br><span class="text-xs">3C2 = 3 個組合</span></h5>
+                            <div class="flex flex-col gap-4 text-center flex-grow justify-center">
+                                <div class="bg-white p-3 rounded-lg shadow-md border-2 border-purple-400 transform hover:scale-105 transition flex items-center justify-between">
+                                    <span class="text-2xl md:text-3xl ml-2">🔴🔵</span>
+                                    <div class="text-right mr-2">
+                                        <span class="block text-xs font-bold text-teal-700">紅藍組合</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white p-3 rounded-lg shadow-md border-2 border-orange-400 transform hover:scale-105 transition flex items-center justify-between">
+                                    <span class="text-2xl md:text-3xl ml-2">🔴🟢</span>
+                                    <div class="text-right mr-2">
+                                        <span class="block text-xs font-bold text-teal-700">紅綠組合</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white p-3 rounded-lg shadow-md border-2 border-cyan-400 transform hover:scale-105 transition flex items-center justify-between">
+                                    <span class="text-2xl md:text-3xl ml-2">🔵🟢</span>
+                                    <div class="text-right mr-2">
+                                        <span class="block text-xs font-bold text-teal-700">藍綠組合</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="mt-6 bg-amber-50 border-l-4 border-amber-400 p-3 rounded-r-lg shadow-sm text-sm">
+                        <p class="font-bold text-amber-800 flex items-center mb-1"><span class="text-lg mr-2">💡</span> 總結：</p>
+                        <p class="text-gray-700 leading-relaxed">
+                            複雜題目中用 <span class="font-mono bg-white px-1.5 py-0.5 rounded border text-red-600 font-bold">nPr</span> 容易出錯！如果我們用 <span class="font-bold text-teal-600 bg-teal-100 px-1.5 py-0.5 rounded">先選 nCr</span>，就可以很乾淨地抽出純粹的組合。然後如果有需要，我們才手動加上 <span class="font-mono bg-white px-1.5 py-0.5 rounded border text-purple-600 font-bold">× r!</span> 進行排列。這就是 DSE 拆題的心法！
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: 4 Example Questions -->
+            <div class="bg-white rounded-2xl shadow-lg border border-teal-100 overflow-hidden">
+                <div class="flex flex-wrap bg-gray-100 border-b border-gray-200 text-sm">
+                    <button class="ncr-tab-btn flex-1 py-3 px-2 text-center text-gray-600 hover:bg-gray-200 transition ncr-tab-active" data-target="ncr-q1">1. 基礎 nCr</button>
+                    <button class="ncr-tab-btn flex-1 py-3 px-2 text-center text-gray-600 hover:bg-gray-200 transition" data-target="ncr-q2">2. nCr + 排列</button>
+                    <button class="ncr-tab-btn flex-1 py-3 px-2 text-center text-gray-600 hover:bg-gray-200 transition" data-target="ncr-q3">3. 條件分組</button>
+                    <button class="ncr-tab-btn flex-1 py-3 px-2 text-center text-gray-600 hover:bg-gray-200 transition" data-target="ncr-q4">4. DSE 進階</button>
+                </div>
+
+                <div class="p-5 md:p-6 text-sm md:text-base">
+                    
+                    <!-- nCr Q1 -->
+                    <div id="ncr-q1" class="ncr-question-content block">
+                        <h4 class="text-lg font-bold text-teal-800 mb-2">題目一：基礎組合 (純選擇，不排隊)</h4>
+                        <p class="bg-gray-50 p-3 rounded-lg border-l-4 border-teal-500">
+                            班上有 10 名學生，老師需要選出 3 名學生作為班會幹事（職位相同）。共有多少種不同的選法？
+                        </p>
+                        <button class="mt-4 bg-teal-600 text-white px-4 py-2 rounded-full hover:bg-teal-700 transition font-bold text-sm" onclick="showSolution('sol-1')">顯示視覺化題解</button>
+                        
+                        <div id="sol-1" class="step-hidden mt-6 space-y-4">
+                            <div class="p-4 border border-teal-200 rounded-lg bg-teal-50">
+                                <h5 class="font-bold text-teal-800 mb-2">解題思路：</h5>
+                                <p>因為 3 個幹事的職位完全相同，所以 A, B, C 被選中，跟 C, B, A 被選中是<strong>同一個組合</strong>（不計次序）。</p>
+                                <p class="mt-2 font-mono text-lg">直接使用組合公式：<sup>10</sup>C<sub>3</sub></p>
+                                <p class="mt-2 text-xl font-bold text-rose-600">答案 = 120 種</p>
+                            </div>
+                            <div class="flex flex-col sm:flex-row justify-center items-center p-4 gap-4 bg-gray-50 rounded-xl">
+                                <div class="flex flex-wrap gap-1 bg-gray-100 p-3 rounded-xl justify-center">
+                                    <span class="text-2xl">🧑‍🎓</span><span class="text-2xl">🧑‍🎓</span><span class="text-2xl">🧑‍🎓</span>
+                                    <span class="text-2xl opacity-30">🧑‍🎓</span><span class="text-2xl opacity-30">🧑‍🎓</span><span class="text-2xl opacity-30">🧑‍🎓</span>
+                                    <span class="text-2xl opacity-30">🧑‍🎓</span><span class="text-2xl opacity-30">🧑‍🎓</span><span class="text-2xl opacity-30">🧑‍🎓</span><span class="text-2xl opacity-30">🧑‍🎓</span>
+                                </div>
+                                <span class="text-gray-600 text-sm">從 10 人中選出 3 個 (無分次序)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- nCr Q2 -->
+                    <div id="ncr-q2" class="ncr-question-content hidden">
+                        <h4 class="text-lg font-bold text-teal-800 mb-2">題目二：先選後排 (基礎排列)</h4>
+                        <p class="bg-gray-50 p-3 rounded-lg border-l-4 border-blue-500">
+                            從 8 幅畫作中選出 4 幅，並將它們掛在牆上 4 個從左到右不同的位置展出。共有多少種展出方法？
+                        </p>
+                        <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition font-bold text-sm" onclick="showSolution('sol-2')">顯示視覺化題解</button>
+                        
+                        <div id="sol-2" class="step-hidden mt-6 space-y-4">
+                            <div class="p-4 border border-blue-200 rounded-lg bg-blue-50">
+                                <h5 class="font-bold text-blue-800 mb-2">解題思路 (不用 8P4，用先選後排)：</h5>
+                                <div class="space-y-2 text-sm">
+                                    <p><strong>步驟 1：先選。</strong> 從 8 幅畫中選出 4 幅 (不理次序)。<br>
+                                       方法數 = <span class="font-mono bg-white px-1.5 py-0.5 rounded"><sup>8</sup>C<sub>4</sub></span> = 70</p>
+                                    <p><strong>步驟 2：後排。</strong> 將選出的 4 幅畫排列在 4 個位置上。<br>
+                                       方法數 = <span class="font-mono bg-white px-1.5 py-0.5 rounded">4!</span> = 24</p>
+                                    <p class="text-lg border-t border-blue-200 pt-2 mt-2">
+                                        總數 = <sup>8</sup>C<sub>4</sub> × 4! = 70 × 24 = <span class="font-bold text-rose-600">1680 種</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-center p-4 bg-gray-50 rounded-xl space-y-4 text-sm">
+                                <div class="flex flex-wrap items-center justify-center gap-3">
+                                    <div class="bg-white p-2 rounded shadow">🖼️ × 8</div>
+                                    <span>➡️ <sup class="font-mono">8</sup>C<sub>4</sub> ➡️</span>
+                                    <div class="bg-white p-2 rounded shadow border-2 border-dashed border-gray-400">🖼️ 🖼️ 🖼️ 🖼️</div>
+                                </div>
+                                <div class="flex flex-wrap items-center justify-center gap-3">
+                                    <span>➡️ 4! 排序 ➡️</span>
+                                    <div class="flex gap-1">
+                                        <div class="w-8 h-12 bg-blue-200 border border-blue-400 rounded flex items-center justify-center">1</div>
+                                        <div class="w-8 h-12 bg-blue-200 border border-blue-400 rounded flex items-center justify-center">2</div>
+                                        <div class="w-8 h-12 bg-blue-200 border border-blue-400 rounded flex items-center justify-center">3</div>
+                                        <div class="w-8 h-12 bg-blue-200 border border-blue-400 rounded flex items-center justify-center">4</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- nCr Q3 -->
+                    <div id="ncr-q3" class="ncr-question-content hidden">
+                        <h4 class="text-lg font-bold text-teal-800 mb-2">題目三：條件分組組合</h4>
+                        <p class="bg-gray-50 p-3 rounded-lg border-l-4 border-purple-500">
+                            課外活動小組有 5 名男生和 4 名女生。現在需要選出 2 名男生和 2 名女生組成一個 4 人委員會。有多少種選法？
+                        </p>
+                        <button class="mt-4 bg-purple-600 text-white px-4 py-2 rounded-full hover:bg-purple-700 transition font-bold text-sm" onclick="showSolution('sol-3')">顯示視覺化題解</button>
+                        
+                        <div id="sol-3" class="step-hidden mt-6 space-y-4">
+                            <div class="p-4 border border-purple-200 rounded-lg bg-purple-50">
+                                <h5 class="font-bold text-purple-800 mb-2">解題思路：</h5>
+                                <div class="space-y-2 text-sm">
+                                    <p>因為男女生是兩個獨立的群體，我們要分別進行選擇 (nCr)，然後將結果相乘 (乘法法則)。</p>
+                                    <ul class="list-disc list-inside ml-2">
+                                        <li>選男生：從 5 人選 2 人 = <sup>5</sup>C<sub>2</sub> = 10</li>
+                                        <li>選女生：從 4 人選 2 人 = <sup>4</sup>C<sub>2</sub> = 6</li>
+                                    </ul>
+                                    <p class="text-lg border-t border-purple-200 pt-2 mt-2">
+                                        總數 = <sup>5</sup>C<sub>2</sub> × <sup>4</sup>C<sub>2</sub> = 10 × 6 = <span class="font-bold text-rose-600">60 種</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex justify-center items-center gap-6 p-4 bg-gray-50 rounded-xl">
+                                <div class="text-center">
+                                    <div class="text-2xl mb-1 text-blue-500">👨👨👨👨👨</div>
+                                    <div class="bg-blue-100 text-blue-800 rounded px-2 py-1 text-xs">選 2 個 (<sup>5</sup>C<sub>2</sub>)</div>
+                                </div>
+                                <div class="text-xl font-bold text-gray-400">×</div>
+                                <div class="text-center">
+                                    <div class="text-2xl mb-1 text-pink-500">👩👩👩👩</div>
+                                    <div class="bg-pink-100 text-pink-800 rounded px-2 py-1 text-xs">選 2 個 (<sup>4</sup>C<sub>2</sub>)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- nCr Q4 -->
+                    <div id="ncr-q4" class="ncr-question-content hidden">
+                        <h4 class="text-lg font-bold text-teal-800 mb-2">題目四：DSE 進階必考 (分組 + 排列)</h4>
+                        <p class="bg-gray-50 p-3 rounded-lg border-l-4 border-rose-500">
+                            有 6 名男生和 4 名女生。現在要從中選出 5 人排成一行拍照，且隊伍中<strong class="text-rose-600">必須包含剛好 2 名女生</strong>。共有多少種排法？
+                        </p>
+                        <button class="mt-4 bg-rose-600 text-white px-4 py-2 rounded-full hover:bg-rose-700 transition font-bold text-sm" onclick="showSolution('sol-4')">顯示視覺化題解</button>
+                        
+                        <div id="sol-4" class="step-hidden mt-6 space-y-4">
+                            <div class="p-4 border border-rose-200 rounded-lg bg-rose-50 text-sm">
+                                <h5 class="font-bold text-rose-800 mb-2">解題思路 (為何要用 nCr × r! 的完美例子)：</h5>
+                                <p class="text-gray-700 mb-2">如果嘗試直接用 nPr，你會非常混亂！我們堅持「先選合適的人，最後才排隊」。</p>
+                                <div class="space-y-2">
+                                    <p><strong>1：先選女生。</strong> 必須剛好 2 女，從 4 女中選 2。<br>
+                                       方法 = <sup>4</sup>C<sub>2</sub> = 6</p>
+                                    <p><strong>2：再選男生。</strong> 要 5 人，已選 2 女，還欠 3 男。從 6 男中選 3。<br>
+                                       方法 = <sup>6</sup>C<sub>3</sub> = 20</p>
+                                    <p><strong>3：一起排隊！</strong> 已經選出了 5 個人 (2女3男)，排成一行。<br>
+                                       方法 = 5! = 120</p>
+                                    <p class="text-lg border-t border-rose-200 pt-2 mt-2">
+                                        總數 = <sup>4</sup>C<sub>2</sub> × <sup>6</sup>C<sub>3</sub> × 5! = 6 × 20 × 120 = <span class="font-bold text-rose-600">14400 種</span>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="p-3 bg-white rounded-xl border border-gray-200">
+                                <div class="flex flex-col md:flex-row items-center justify-center gap-3 text-center">
+                                    <div class="bg-pink-50 p-2 rounded-lg border border-pink-200 w-full md:w-auto">
+                                        <p class="font-bold text-pink-700 text-xs">1. 選女生</p>
+                                        <p class="text-xl mt-1">👩👩</p>
+                                        <p class="text-xs text-gray-500"><sup>4</sup>C<sub>2</sub></p>
+                                    </div>
+                                    <span class="font-bold text-gray-400 text-xs">AND</span>
+                                    <div class="bg-blue-50 p-2 rounded-lg border border-blue-200 w-full md:w-auto">
+                                        <p class="font-bold text-blue-700 text-xs">2. 選男生</p>
+                                        <p class="text-xl mt-1">👨👨👨</p>
+                                        <p class="text-xs text-gray-500"><sup>6</sup>C<sub>3</sub></p>
+                                    </div>
+                                    <span class="font-bold text-gray-400 text-xs">THEN</span>
+                                    <div class="bg-amber-50 p-2 rounded-lg border border-amber-200 w-full md:w-auto">
+                                        <p class="font-bold text-amber-700 text-xs">3. 5人排隊</p>
+                                        <div class="flex gap-1 justify-center mt-1">
+                                            <div class="w-4 h-6 bg-gray-300 rounded"></div>
+                                            <div class="w-4 h-6 bg-gray-300 rounded"></div>
+                                            <div class="w-4 h-6 bg-gray-300 rounded"></div>
+                                            <div class="w-4 h-6 bg-gray-300 rounded"></div>
+                                            <div class="w-4 h-6 bg-gray-300 rounded"></div>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">× 5!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ==================== TAB 5: DSE MC PRACTICE QUESTIONS ==================== -->
         <section id="sec-dse-mc" class="tab-content hidden space-y-6">
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
                 <div class="border-b border-slate-100 pb-4 mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
@@ -571,7 +920,7 @@
     <footer class="bg-slate-900 text-slate-400 text-xs text-center py-6 mt-12 border-t border-slate-800">
         <div class="max-w-7xl mx-auto px-4 space-y-2">
             <p class="font-medium text-slate-300">新城數學互動模擬器 - 專為香港 DSE 中五學生設計</p>
-            <p>涵蓋考點：加法原理 (Addition Principle)、乘法原理 (Multiplication Principle)、階乘排列 (!)</p>
+            <p>涵蓋考點：加法原理、乘法原理、階乘排列 (!)、組合 (nCr)</p>
         </div>
     </footer>
 
@@ -600,6 +949,22 @@
             { icon: '🥻', name: '橙短裙', bg: 'bg-orange-100 text-orange-600 border-orange-300' }
         ];
 
+        /* ==================== MATH UTILS (Global) ==================== */
+        function calculateFactorial(num) {
+            if (num === 0 || num === 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= num; i++) {
+                result *= i;
+            }
+            return result;
+        }
+
+        function calculateNCr(n, r) {
+            if (r > n) return 0;
+            if (r === 0 || r === n) return 1;
+            return calculateFactorial(n) / (calculateFactorial(r) * calculateFactorial(n - r));
+        }
+
         /* ==================== TAB NAVIGATION ==================== */
         function switchTab(tabId) {
             currentTab = tabId;
@@ -607,7 +972,7 @@
             document.getElementById(`sec-${tabId}`).classList.remove('hidden');
 
             // Update tab button styles
-            const tabs = ['addition', 'multiplication', 'factorial', 'dse-mc'];
+            const tabs = ['addition', 'multiplication', 'factorial', 'ncr', 'dse-mc'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-${t}`);
                 if (t === tabId) {
@@ -623,144 +988,85 @@
             }
         }
 
-        /* ==================== TAB 1: ADDITION PRINCIPLE LOGIC ==================== */
+        /* ==================== TAB 1: ADDITION PRINCIPLE ==================== */
         function updateAdditionView() {
             const topsCount = parseInt(document.getElementById('tops-range').value);
             const skirtsCount = parseInt(document.getElementById('skirts-range').value);
 
-            // Update Labels
             document.getElementById('tops-count-display').innerText = `${topsCount} 件`;
             document.getElementById('skirts-count-display').innerText = `${skirtsCount} 件`;
             document.getElementById('tops-num').innerText = topsCount;
             document.getElementById('skirts-num').innerText = skirtsCount;
 
-            // Render Tops Icons
             const topsContainer = document.getElementById('tops-items-container');
             topsContainer.innerHTML = '';
-            if (topsCount === 0) {
-                topsContainer.innerHTML = `<span class="text-slate-400 text-xs italic">無選擇 (0)</span>`;
-            } else {
+            if (topsCount === 0) topsContainer.innerHTML = `<span class="text-slate-400 text-xs italic">無選擇 (0)</span>`;
+            else {
                 for (let i = 0; i < topsCount; i++) {
                     const item = shirtSVGs[i];
-                    topsContainer.innerHTML += `
-                        <div class="flex flex-col items-center p-2 rounded-xl border ${item.bg} shadow-sm transform hover:scale-105 transition-transform">
-                            <span class="text-3xl">${item.icon}</span>
-                            <span class="text-xs font-bold mt-1">${item.name}</span>
-                        </div>
-                    `;
+                    topsContainer.innerHTML += `<div class="flex flex-col items-center p-2 rounded-xl border ${item.bg} shadow-sm transform hover:scale-105 transition-transform"><span class="text-3xl">${item.icon}</span><span class="text-xs font-bold mt-1">${item.name}</span></div>`;
                 }
             }
 
-            // Render Skirts Icons
             const skirtsContainer = document.getElementById('skirts-items-container');
             skirtsContainer.innerHTML = '';
-            if (skirtsCount === 0) {
-                skirtsContainer.innerHTML = `<span class="text-slate-400 text-xs italic">無選擇 (0)</span>`;
-            } else {
+            if (skirtsCount === 0) skirtsContainer.innerHTML = `<span class="text-slate-400 text-xs italic">無選擇 (0)</span>`;
+            else {
                 for (let i = 0; i < skirtsCount; i++) {
                     const item = skirtSVGs[i];
-                    skirtsContainer.innerHTML += `
-                        <div class="flex flex-col items-center p-2 rounded-xl border ${item.bg} shadow-sm transform hover:scale-105 transition-transform">
-                            <span class="text-3xl">${item.icon}</span>
-                            <span class="text-xs font-bold mt-1">${item.name}</span>
-                        </div>
-                    `;
+                    skirtsContainer.innerHTML += `<div class="flex flex-col items-center p-2 rounded-xl border ${item.bg} shadow-sm transform hover:scale-105 transition-transform"><span class="text-3xl">${item.icon}</span><span class="text-xs font-bold mt-1">${item.name}</span></div>`;
                 }
             }
 
-            // Update Formula Calculation
             const total = topsCount + skirtsCount;
             document.getElementById('addition-formula-display').innerText = `${topsCount} + ${skirtsCount} = ${total} 種選擇`;
         }
 
-        /* ==================== TAB 2: MULTIPLICATION PRINCIPLE LOGIC ==================== */
+        /* ==================== TAB 2: MULTIPLICATION PRINCIPLE ==================== */
         let currentMultiScenario = 'cha-chaan-teng';
-
         const multiScenarios = {
             'cha-chaan-teng': {
                 title: '<i class="fa-solid fa-utensils text-amber-600"></i> 茶餐廳套餐組合問題',
                 desc: '點一份套餐必須選擇：<strong class="underline">1款主食</strong> <span class="font-bold text-amber-600">及 (AND)</span> <strong class="underline">1款飲料</strong>。',
-                step1Label: '第一階段 (主食類別)：',
-                step2Label: '第二階段 (飲料類別)：',
-                step1Options: [
-                    { id: 'M1', name: '幹炒牛河', emoji: '🍝' },
-                    { id: 'M2', name: '菠蘿油', emoji: '🧈' },
-                    { id: 'M3', name: '餐肉蛋飯', emoji: '🍛' },
-                    { id: 'M4', name: '西多士', emoji: '🍞' }
-                ],
-                step2Options: [
-                    { id: 'D1', name: '港式奶茶', emoji: '🧋' },
-                    { id: 'D2', name: '凍檸茶', emoji: '🍋' },
-                    { id: 'D3', name: '咖啡', emoji: '☕' },
-                    { id: 'D4', name: '鴛鴦', emoji: '🥛' }
-                ]
+                step1Label: '第一階段 (主食類別)：', step2Label: '第二階段 (飲料類別)：',
+                step1Options: [{ id: 'M1', name: '幹炒牛河', emoji: '🍝' }, { id: 'M2', name: '菠蘿油', emoji: '🧈' }, { id: 'M3', name: '餐肉蛋飯', emoji: '🍛' }, { id: 'M4', name: '西多士', emoji: '🍞' }],
+                step2Options: [{ id: 'D1', name: '港式奶茶', emoji: '🧋' }, { id: 'D2', name: '凍檸茶', emoji: '🍋' }, { id: 'D3', name: '咖啡', emoji: '☕' }, { id: 'D4', name: '鴛鴦', emoji: '🥛' }]
             },
             'code-combo': {
                 title: '<i class="fa-solid fa-key text-amber-600"></i> 密碼解鎖組合問題',
                 desc: '設定一個雙位數密碼：<strong class="underline">第1位是字母</strong> <span class="font-bold text-amber-600">及 (AND)</span> <strong class="underline">第2位是數字</strong>。',
-                step1Label: '第一階段 (選擇字母 A-D)：',
-                step2Label: '第二階段 (選擇數字 0-3)：',
-                step1Options: [
-                    { id: 'A', name: '字母 A', emoji: '🅰️' },
-                    { id: 'B', name: '字母 B', emoji: '🅱️' },
-                    { id: 'C', name: '字母 C', emoji: '🔤' },
-                    { id: 'D', name: '字母 D', emoji: '🔠' }
-                ],
-                step2Options: [
-                    { id: '0', name: '數字 0', emoji: '0️⃣' },
-                    { id: '1', name: '數字 1', emoji: '1️⃣' },
-                    { id: '2', name: '數字 2', emoji: '2️⃣' },
-                    { id: '3', name: '數字 3', emoji: '3️⃣' }
-                ]
+                step1Label: '第一階段 (選擇字母 A-D)：', step2Label: '第二階段 (選擇數字 0-3)：',
+                step1Options: [{ id: 'A', name: '字母 A', emoji: '🅰️' }, { id: 'B', name: '字母 B', emoji: '🅱️' }, { id: 'C', name: '字母 C', emoji: '🔤' }, { id: 'D', name: '字母 D', emoji: '🔠' }],
+                step2Options: [{ id: '0', name: '數字 0', emoji: '0️⃣' }, { id: '1', name: '數字 1', emoji: '1️⃣' }, { id: '2', name: '數字 2', emoji: '2️⃣' }, { id: '3', name: '數字 3', emoji: '3️⃣' }]
             },
             'outfit-combo': {
                 title: '<i class="fa-solid fa-shirt text-amber-600"></i> 服裝配搭 (連鎖階段)',
                 desc: '今天出門要穿：<strong class="underline">1件上衣</strong> <span class="font-bold text-amber-600">及 (AND)</span> <strong class="underline">1件長褲</strong>。',
-                step1Label: '第一階段 (上衣)：',
-                step2Label: '第二階段 (長褲/下裝)：',
-                step1Options: [
-                    { id: 'T1', name: '紅T恤', emoji: '🔴' },
-                    { id: 'T2', name: '藍襯衫', emoji: '🔵' },
-                    { id: 'T3', name: '黃衛衣', emoji: '🟡' },
-                    { id: 'T4', name: '綠外套', emoji: '🟢' }
-                ],
-                step2Options: [
-                    { id: 'P1', name: '黑牛仔褲', emoji: '👖' },
-                    { id: 'P2', name: '白休閒褲', emoji: '⚪' },
-                    { id: 'P3', name: '灰運動褲', emoji: '🔘' },
-                    { id: 'P4', name: '卡其短褲', emoji: '🩳' }
-                ]
+                step1Label: '第一階段 (上衣)：', step2Label: '第二階段 (長褲/下裝)：',
+                step1Options: [{ id: 'T1', name: '紅T恤', emoji: '🔴' }, { id: 'T2', name: '藍襯衫', emoji: '🔵' }, { id: 'T3', name: '黃衛衣', emoji: '🟡' }, { id: 'T4', name: '綠外套', emoji: '🟢' }],
+                step2Options: [{ id: 'P1', name: '黑牛仔褲', emoji: '👖' }, { id: 'P2', name: '白休閒褲', emoji: '⚪' }, { id: 'P3', name: '灰運動褲', emoji: '🔘' }, { id: 'P4', name: '卡其短褲', emoji: '🩳' }]
             }
         };
 
         function changeMultiScenario(key) {
             currentMultiScenario = key;
-
-            // Update Scenario Tab buttons style
-            document.querySelectorAll('.scen-btn').forEach(btn => {
-                btn.className = "scen-btn px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-600 hover:bg-slate-200";
-            });
+            document.querySelectorAll('.scen-btn').forEach(btn => btn.className = "scen-btn px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-600 hover:bg-slate-200");
             document.getElementById(`scen-btn-${key.split('-')[0]}`).className = "scen-btn px-4 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white shadow";
-
+            
             const sc = multiScenarios[key];
             document.getElementById('multi-question-title').innerHTML = sc.title;
             document.getElementById('multi-question-desc').innerHTML = sc.desc;
             document.getElementById('step1-label').innerText = sc.step1Label;
             document.getElementById('step2-label').innerText = sc.step2Label;
 
-            // Populate Dropdowns
             const s1 = document.getElementById('step1-select');
             const s2 = document.getElementById('step2-select');
-            s1.innerHTML = '';
-            s2.innerHTML = '';
-
+            s1.innerHTML = ''; s2.innerHTML = '';
             for (let i = 2; i <= 4; i++) {
                 s1.innerHTML += `<option value="${i}">${i} 個選項</option>`;
                 s2.innerHTML += `<option value="${i}">${i} 個選項</option>`;
             }
-            s1.value = "3";
-            s2.value = "3";
-
+            s1.value = "3"; s2.value = "3";
             renderTreeDiagram();
         }
 
@@ -768,90 +1074,48 @@
             const sc = multiScenarios[currentMultiScenario];
             const n1 = parseInt(document.getElementById('step1-select').value);
             const n2 = parseInt(document.getElementById('step2-select').value);
-
             const svg = document.getElementById('tree-svg');
-            svg.innerHTML = ''; // Clear SVG
+            svg.innerHTML = ''; 
+            const width = 800, height = 450, rootX = 60, rootY = height / 2, step1X = 280, step2X = 550;
 
-            const width = 800;
-            const height = 450;
-
-            const rootX = 60;
-            const rootY = height / 2;
-
-            const step1X = 280;
-            const step2X = 550;
-
-            // Draw Root Node
-            svg.innerHTML += `
-                <g class="tree-node">
-                    <circle cx="${rootX}" cy="${rootY}" r="28" fill="#f59e0b" stroke="#d97706" stroke-width="3" />
-                    <text x="${rootX}" y="${rootY + 5}" text-anchor="middle" fill="white" font-weight="bold" font-size="14">開始</text>
-                </g>
-            `;
+            svg.innerHTML += `<g class="tree-node"><circle cx="${rootX}" cy="${rootY}" r="28" fill="#f59e0b" stroke="#d97706" stroke-width="3" /><text x="${rootX}" y="${rootY + 5}" text-anchor="middle" fill="white" font-weight="bold" font-size="14">開始</text></g>`;
 
             const s1Items = sc.step1Options.slice(0, n1);
             const s2Items = sc.step2Options.slice(0, n2);
-
             const totalLeafs = n1 * n2;
             let leafCounter = 0;
 
             s1Items.forEach((item1, idx1) => {
-                // Calculate position for Level 1 Nodes
-                const level1SectionHeight = height / n1;
-                const node1Y = (idx1 + 0.5) * level1SectionHeight;
+                const node1Y = (idx1 + 0.5) * (height / n1);
+                svg.innerHTML += `<line x1="${rootX + 28}" y1="${rootY}" x2="${step1X - 35}" y2="${node1Y}" stroke="#cbd5e1" stroke-width="3" class="tree-line" />`;
+                svg.innerHTML += `<g class="tree-node"><rect x="${step1X - 35}" y="${node1Y - 20}" width="110" height="40" rx="10" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/><text x="${step1X + 20}" y="${node1Y + 5}" text-anchor="middle" fill="#1e293b" font-weight="bold" font-size="13">${item1.emoji} ${item1.name}</text></g>`;
 
-                // Draw line Root -> Level 1
-                svg.innerHTML += `
-                    <line x1="${rootX + 28}" y1="${rootY}" x2="${step1X - 35}" y2="${node1Y}" stroke="#cbd5e1" stroke-width="3" class="tree-line" />
-                `;
-
-                // Draw Level 1 Node
-                svg.innerHTML += `
-                    <g class="tree-node">
-                        <rect x="${step1X - 35}" y="${node1Y - 20}" width="110" height="40" rx="10" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
-                        <text x="${step1X + 20}" y="${node1Y + 5}" text-anchor="middle" fill="#1e293b" font-weight="bold" font-size="13">${item1.emoji} ${item1.name}</text>
-                    </g>
-                `;
-
-                // Level 2 Nodes (Leafs)
                 s2Items.forEach((item2, idx2) => {
                     const leafY = ((leafCounter) + 0.5) * (height / totalLeafs);
-
-                    // Line Level 1 -> Level 2
-                    svg.innerHTML += `
-                        <line x1="${step1X + 75}" y1="${node1Y}" x2="${step2X - 35}" y2="${leafY}" stroke="#e2e8f0" stroke-width="2" class="tree-line" />
-                    `;
-
-                    // Level 2 Node Box
-                    svg.innerHTML += `
-                        <g class="tree-node">
-                            <rect x="${step2X - 35}" y="${leafY - 16}" width="110" height="32" rx="8" fill="#fffbe0" stroke="#d97706" stroke-width="1.5"/>
-                            <text x="${step2X + 20}" y="${leafY + 4}" text-anchor="middle" fill="#78350f" font-weight="bold" font-size="12">${item2.emoji} ${item2.name}</text>
-                        </g>
-                    `;
-
-                    // Outcome Text (Combination)
-                    svg.innerHTML += `
-                        <text x="${step2X + 130}" y="${leafY + 4}" text-anchor="start" fill="#059669" font-weight="extrabold" font-size="12" font-family="monospace">
-                            ➔ [${item1.name.substring(0, 3)} + ${item2.name.substring(0, 3)}]
-                        </text>
-                    `;
-
+                    svg.innerHTML += `<line x1="${step1X + 75}" y1="${node1Y}" x2="${step2X - 35}" y2="${leafY}" stroke="#e2e8f0" stroke-width="2" class="tree-line" />`;
+                    svg.innerHTML += `<g class="tree-node"><rect x="${step2X - 35}" y="${leafY - 16}" width="110" height="32" rx="8" fill="#fffbe0" stroke="#d97706" stroke-width="1.5"/><text x="${step2X + 20}" y="${leafY + 4}" text-anchor="middle" fill="#78350f" font-weight="bold" font-size="12">${item2.emoji} ${item2.name}</text></g>`;
+                    
+                    let comboText = "";
+                    if (currentMultiScenario === 'code-combo') {
+                        // 密碼情境直接組合 ID (例: A0, B1)
+                        comboText = `➔ ${item1.id}${item2.id}`;
+                    } else {
+                        // 其他情境取前兩個字 (例: [幹炒 + 港式])
+                        comboText = `➔ [${item1.name.substring(0, 2)} + ${item2.name.substring(0, 2)}]`;
+                    }
+                    svg.innerHTML += `<text x="${step2X + 130}" y="${leafY + 4}" text-anchor="start" fill="#059669" font-weight="extrabold" font-size="14" font-family="monospace">${comboText}</text>`;
+                    
                     leafCounter++;
                 });
             });
 
-            // Update Formula Text
-            const totalCombinations = n1 * n2;
-            document.getElementById('multiplication-formula-display').innerText = `${n1} × ${n2} = ${totalCombinations} 種組合`;
+            document.getElementById('multiplication-formula-display').innerText = `${n1} × ${n2} = ${n1 * n2} 種組合`;
         }
 
-        /* ==================== TAB 3: FACTORIAL & PERMUTATIONS LOGIC ==================== */
+        /* ==================== TAB 3: FACTORIAL & PERMUTATIONS ==================== */
         const letterBadges = [
-            { letter: 'A', bg: 'bg-red-500 text-white' },
-            { letter: 'B', bg: 'bg-blue-500 text-white' },
-            { letter: 'C', bg: 'bg-emerald-500 text-white' },
-            { letter: 'D', bg: 'bg-amber-500 text-white' },
+            { letter: 'A', bg: 'bg-red-500 text-white' }, { letter: 'B', bg: 'bg-blue-500 text-white' },
+            { letter: 'C', bg: 'bg-emerald-500 text-white' }, { letter: 'D', bg: 'bg-amber-500 text-white' },
             { letter: 'E', bg: 'bg-purple-500 text-white' }
         ];
 
@@ -872,38 +1136,19 @@
         function updateFactorialView() {
             const n = parseInt(document.getElementById('factorial-n-range').value);
             document.getElementById('factorial-n-value').innerText = n;
-
-            // Render Active Letters Header Badges
             const activeContainer = document.getElementById('active-letters-container');
             activeContainer.innerHTML = '';
             const activeLetters = [];
             for (let i = 0; i < n; i++) {
                 activeLetters.push(letterBadges[i]);
-                activeContainer.innerHTML += `
-                    <div class="w-12 h-12 rounded-xl ${letterBadges[i].bg} font-black text-xl flex items-center justify-center shadow-md transform hover:scale-110 transition-transform">
-                        ${letterBadges[i].letter}
-                    </div>
-                `;
+                activeContainer.innerHTML += `<div class="w-12 h-12 rounded-xl ${letterBadges[i].bg} font-black text-xl flex items-center justify-center shadow-md transform hover:scale-110 transition-transform">${letterBadges[i].letter}</div>`;
             }
 
-            // Breakdown Formula Text
-            let breakdownStr = `${n}! = `;
-            let total = 1;
-            let multParts = [];
-            for (let i = n; i >= 1; i--) {
-                multParts.push(i);
-                total *= i;
-            }
-            breakdownStr += multParts.join(' × ') + ` = ${total}`;
-            document.getElementById('factorial-breakdown').innerText = breakdownStr;
-
-            // Generate Permutations
-            const rawLetters = activeLetters.map(item => item.letter);
-            const allPerms = getPermutations(rawLetters);
-
+            let breakdownStr = `${n}! = `, total = 1, multParts = [];
+            for (let i = n; i >= 1; i--) { multParts.push(i); total *= i; }
+            document.getElementById('factorial-breakdown').innerText = `${n}! = ${multParts.join(' × ')} = ${total}`;
+            const allPerms = getPermutations(activeLetters.map(item => item.letter));
             document.getElementById('total-perms-count').innerText = allPerms.length;
-
-            // Render Permutation Cards
             const grid = document.getElementById('permutations-grid');
             grid.innerHTML = '';
 
@@ -912,22 +1157,69 @@
                     const obj = letterBadges.find(b => b.letter === char);
                     return `<span class="w-7 h-7 rounded-md ${obj.bg} text-xs font-bold flex items-center justify-center">${char}</span>`;
                 }).join('');
-
-                grid.innerHTML += `
-                    <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-cyan-400 transition-all">
-                        <span class="text-xs font-mono font-bold text-slate-400">#${idx + 1}</span>
-                        <div class="flex gap-1">
-                            ${badgesHtml}
-                        </div>
-                    </div>
-                `;
+                grid.innerHTML += `<div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-cyan-400 transition-all"><span class="text-xs font-mono font-bold text-slate-400">#${idx + 1}</span><div class="flex gap-1">${badgesHtml}</div></div>`;
             });
-
-            // Update Formula Display Banner
             document.getElementById('factorial-formula-display').innerText = `P(${n}, ${n}) = ${n}! = ${total} 種排法`;
         }
 
-        /* ==================== TAB 4: DSE MC PRACTICE QUESTIONS LOGIC ==================== */
+
+        /* ==================== TAB 4: nCr COMBINATIONS LOGIC ==================== */
+        const nSlider = document.getElementById('n-slider');
+        const rSlider = document.getElementById('r-slider');
+        const ballsContainer = document.getElementById('balls-container');
+
+        function updateSimulator() {
+            let n = parseInt(nSlider.value);
+            if (parseInt(rSlider.max) !== n) rSlider.max = n;
+            let r = parseInt(rSlider.value);
+            if (r > n) { r = n; rSlider.value = n; }
+
+            document.getElementById('n-value').textContent = n;
+            document.getElementById('r-value').textContent = r;
+            document.getElementById('disp-n').textContent = n;
+            document.getElementById('disp-r').textContent = r;
+            document.getElementById('result-ncr').textContent = calculateNCr(n, r);
+            document.getElementById('visual-desc').textContent = `從 ${n} 個球中選出 ${r} 個`;
+
+            ballsContainer.innerHTML = '';
+            for (let i = 0; i < n; i++) {
+                const ball = document.createElement('div');
+                if (i < r) {
+                    ball.className = 'ball w-12 h-12 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white font-bold shadow-md transform scale-110';
+                    ball.textContent = '✓';
+                } else {
+                    ball.className = 'ball w-10 h-10 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center text-gray-400';
+                }
+                ballsContainer.appendChild(ball);
+            }
+        }
+
+        nSlider.addEventListener('input', updateSimulator);
+        rSlider.addEventListener('input', updateSimulator);
+
+        const ncrTabs = document.querySelectorAll('.ncr-tab-btn');
+        const ncrQuestions = document.querySelectorAll('.ncr-question-content');
+
+        ncrTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                ncrTabs.forEach(t => t.classList.remove('ncr-tab-active'));
+                ncrQuestions.forEach(q => { q.classList.add('hidden'); q.classList.remove('block'); });
+                tab.classList.add('ncr-tab-active');
+                const targetId = tab.getAttribute('data-target');
+                document.getElementById(targetId).classList.remove('hidden');
+                document.getElementById(targetId).classList.add('block');
+            });
+        });
+
+        window.showSolution = function(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('step-hidden');
+            el.classList.add('step-visible');
+            event.target.style.display = 'none';
+        }
+
+
+        /* ==================== TAB 5: DSE MC PRACTICE QUESTIONS ==================== */
         const mcExplanations = {
             q1: {
                 correct: true,
@@ -956,36 +1248,25 @@
             const buttons = document.querySelectorAll(`#options-${qId} .opt-btn`);
             const explainBox = document.getElementById(`explain-${qId}`);
 
-            // Disable all buttons in this question
             buttons.forEach(btn => {
                 btn.disabled = true;
                 btn.classList.add('opacity-60', 'cursor-not-allowed');
             });
 
-            // Mark user selection
             if (isCorrect) {
                 mcScores[qId] = true;
                 explainBox.className = "mt-4 p-4 rounded-xl text-sm bg-emerald-50 border border-emerald-300 text-emerald-900";
-                explainBox.innerHTML = `
-                    <div class="font-bold text-emerald-700 text-base mb-1">${mcExplanations[qId].title}</div>
-                    <p>${mcExplanations[qId].text}</p>
-                `;
+                explainBox.innerHTML = `<div class="font-bold text-emerald-700 text-base mb-1">${mcExplanations[qId].title}</div><p>${mcExplanations[qId].text}</p>`;
             } else {
                 mcScores[qId] = false;
                 explainBox.className = "mt-4 p-4 rounded-xl text-sm bg-rose-50 border border-rose-300 text-rose-900";
-                explainBox.innerHTML = `
-                    <div class="font-bold text-rose-700 text-base mb-1">❌ 答錯了！你的選擇是 (${choice})</div>
-                    <p>${mcExplanations[qId].text}</p>
-                `;
+                explainBox.innerHTML = `<div class="font-bold text-rose-700 text-base mb-1">❌ 答錯了！你的選擇是 (${choice})</div><p>${mcExplanations[qId].text}</p>`;
             }
 
             explainBox.classList.remove('hidden');
-
-            // Update Score Tracker
             const totalScore = Object.values(mcScores).filter(Boolean).length;
             document.getElementById('score-display').innerText = `${totalScore} / 4`;
 
-            // Trigger MathJax re-render for formulas in explanation
             if (window.MathJax && MathJax.typesetPromise) {
                 MathJax.typesetPromise([explainBox]).catch(err => console.log(err));
             }
@@ -996,6 +1277,7 @@
             updateAdditionView();
             changeMultiScenario('cha-chaan-teng');
             updateFactorialView();
+            updateSimulator(); // Initialize nCr Simulator
         };
     </script>
 </body>
